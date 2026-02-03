@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Random Cards</title>
+  </head>
+  <body>
+    <h1>Random Cards</h1>
+    {% for img in imgs %}
+      <img src="/static/cards/{{ img }}" alt="Card image" style="width:120px; margin:5px;">
+    {% endfor %}
+  </body>
+</html>

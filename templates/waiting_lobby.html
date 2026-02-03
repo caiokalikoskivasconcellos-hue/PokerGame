@@ -1,0 +1,52 @@
+<!-- waiting_lobby.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Waiting Lobby</title>
+    <style>
+        .center { text-align: center; }
+        .blinking {
+            color: orange;
+            font-weight: bold;
+            animation: blink 1s step-start infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .player {
+            margin: 10px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="center">Waiting Room – Game Code: {{ code }}</h1>
+    <p class="center blinking">Waiting for {{ players_needed }} more player{{ 's' if players_needed != 1 else '' }} to join…</p>
+
+    <div class="center">
+        {% for player in players %}
+            <div class="player">
+                <img src="{{ player.avatar }}" alt="avatar"><br>
+                {{ player.name }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        // Auto-refresh every 5 seconds to check if enough players have joined
+        setTimeout(function() {
+            location.reload();
+        }, 5000);
+    </script>
+</body>
+</html>

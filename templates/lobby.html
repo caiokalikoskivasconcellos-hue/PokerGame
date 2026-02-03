@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lobby</title>
+    <style>
+        .player {
+            margin: 10px;
+            display: inline-block;
+            text-align: center;
+        }
+        img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .center { text-align: center; margin-top: 20px; }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h3>Players in Lobby:</h3>
+    <ul>
+    {% for player in players %}
+        <li>
+        {{ player.name }} – 
+        {% if player.ready %}
+            ✅ Ready
+        {% else %}
+            ⏳ Not Ready
+        {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+    <h1 class="center">Lobby – Game Code: {{ code }}</h1>
+
+    <div class="center">
+        {% for player in players %}
+            <div class="player">
+                <img src="{{ url_for('static', filename=player.avatar) }}" class="avatar" alt="avatar"><br>
+                {{ player.name }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="center">
+        <form action="/start/{{ code }}" method="POST">
+            <input type="hidden" name="name" value="{{ players[-1].name }}">
+            <button type="submit">Start Game</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Analysis - Game {{ game_code }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .player-report {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f9f9f9;
+            position: relative;
+        }
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .player-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .player-style {
+            font-size: 18px;
+            color: #666;
+        }
+        .risk-score {
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+        }
+        .risk-low { background-color: #4CAF50; }
+        .risk-medium { background-color: #FF9800; }
+        .risk-high { background-color: #F44336; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #2196F3;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+        .positional-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .position-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            min-width: 150px;
+            margin: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .summary {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            border: 1px solid #ddd;
+        }
+        .action-breakdown {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+        }
+        .action-item {
+            text-align: center;
+            padding: 10px;
+        }
+        .action-count {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .back-button:hover {
+            background: #1976D2;
+        }
+        .download-report-btn {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .download-report-btn:hover {
+            background: #45a049;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('home') }}" class="back-button">← Back to Home</a>
+        <h1>Player Analysis Report</h1>
+        <p>Game Code: {{ game_code }}</p>
+        
+        {% for player_name, report in reports.items() %}
+        <div class="player-report">
+            <a href="{{ url_for('download_report', game_code=game_code, player_name=player_name) }}" 
+   class="download-report-btn" 
+   style="text-decoration: none;">
+   📥 Download Report
+</a>
+            <div class="player-header">
+                <div>
+                    <div class="player-name">{{ player_name }}</div>
+                    <div class="player-style">{{ report.style }} - {{ report.player_type }}</div>
+                </div>
+                <div class="risk-score 
+                    {% if report.risk_score < 33 %}risk-low
+                    {% elif report.risk_score < 66 %}risk-medium
+                    {% else %}risk-high{% endif %}">
+                    Risk Score: {{ "%.1f"|format(report.risk_score) }}/100
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.1f"|format(report.stats.vpip) }}%</div>
+                    <div class="stat-label">VPIP</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.1f"|format(report.stats.pfr) }}%</div>
+                    <div class="stat-label">PFR</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.1f"|format(report.stats.aggression_frequency) }}%</div>
+                    <div class="stat-label">Aggression Frequency</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.1f"|format(report.stats.win_rate) }}%</div>
+                    <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${{ "%.2f"|format(report.total_profit) }}</div>
+                    <div class="stat-label">Total Profit</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ report.stats.hands_played }}</div>
+                    <div class="stat-label">Hands Played</div>
+                </div>
+            </div>
+
+            <h3>Positional Analysis</h3>
+            <div class="positional-stats">
+                <div class="position-card">
+                    <h4>Early Position</h4>
+                    <div>VPIP: {{ "%.1f"|format(report.positional_stats.early.vpip) }}%</div>
+                    <div>PFR: {{ "%.1f"|format(report.positional_stats.early.pfr) }}%</div>
+                    <div>Hands: {{ report.positional_stats.early.hands }}</div>
+                </div>
+                <div class="position-card">
+                    <h4>Middle Position</h4>
+                    <div>VPIP: {{ "%.1f"|format(report.positional_stats.middle.vpip) }}%</div>
+                    <div>PFR: {{ "%.1f"|format(report.positional_stats.middle.pfr) }}%</div>
+                    <div>Hands: {{ report.positional_stats.middle.hands }}</div>
+                </div>
+                <div class="position-card">
+                    <h4>Late Position</h4>
+                    <div>VPIP: {{ "%.1f"|format(report.positional_stats.late.vpip) }}%</div>
+                    <div>PFR: {{ "%.1f"|format(report.positional_stats.late.pfr) }}%</div>
+                    <div>Hands: {{ report.positional_stats.late.hands }}</div>
+                </div>
+            </div>
+
+            <h3>Action Distribution</h3>
+            <div class="action-breakdown">
+                <div class="action-item">
+                    <div class="action-count">{{ report.stats.total_raises }}</div>
+                    <div>Raises</div>
+                </div>
+                <div class="action-item">
+                    <div class="action-count">{{ report.stats.total_calls }}</div>
+                    <div>Calls</div>
+                </div>
+                <div class="action-item">
+                    <div class="action-count">{{ report.stats.total_checks }}</div>
+                    <div>Checks</div>
+                </div>
+                <div class="action-item">
+                    <div class="action-count">{{ report.stats.total_folds }}</div>
+                    <div>Folds</div>
+                </div>
+            </div>
+
+            <h3>Detailed Analysis</h3>
+            <div class="summary">{{ report.summary }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

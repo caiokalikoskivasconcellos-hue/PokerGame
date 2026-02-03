@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Join Game</title>
+    <style>
+        .error { color: red; font-weight: bold; }
+        .blinking {
+            color: red;
+            font-weight: bold;
+            animation: blink 1s step-start infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .center { text-align: center; }
+    </style>
+</head>
+<body>
+    <h1 class="center">Join Game - Code: {{ code }}</h1>
+
+    {% if full %}
+        <p class="center blinking">This game has reached maximum capacity. Please try joining later.</p>
+    {% else %}
+        {% if error %}<p class="center error">{{ error }}</p>{% endif %}
+        <form method="POST" enctype="multipart/form-data" class="center">
+            <label>Name: <input type="text" name="name" required></label><br><br>
+            <label>Upload Avatar (optional): <input type="file" name="avatar"></label><br><br>
+            <button type="submit">Join Game</button>
+        </form>
+    {% endif %}
+</body>
+</html>

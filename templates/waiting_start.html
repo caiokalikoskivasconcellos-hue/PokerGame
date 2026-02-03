@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Waiting to Start</title>
+    <style>
+        .center {
+            text-align: center;
+            margin-top: 100px;
+            font-size: 24px;
+            font-family: sans-serif;
+        }
+
+        .dots::after {
+            content: '.';
+            animation: dots 1.5s steps(3, end) infinite;
+        }
+
+        @keyframes dots {
+            0%   { content: '.'; }
+            33%  { content: '..'; }
+            66%  { content: '...'; }
+            100% { content: '.'; }
+        }
+    </style>
+</head>
+<body>
+    <div class="center">
+        Waiting for all players to start the game <span class="dots"></span>
+    </div>
+
+    <script>
+        setTimeout(function() {
+            location.reload();
+        }, 3000);  // Refresh every 3 seconds to check if game started
+    </script>
+</body>
+</html>

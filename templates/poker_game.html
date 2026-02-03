@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Poker Game</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        body {
+            background-image: url('/static/Poker Game/background.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            color: white;
+            font-family: sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+        
+        /* STATUS BAR */
+        #status-bar {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 32px;
+            font-weight: bold;
+            color: yellow;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        
+        /* TIMER DISPLAY */
+        #timer-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 15px;
+            border-radius: 10px;
+            z-index: 1000;
+            font-weight: bold;
+        }
+        
+        #table-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .player-slot {
+            position: absolute;
+            width: 150px; /* wider to accommodate buttons */
+            text-align: center;
+            /* center vertically and horizontally relative to the slot position */
+            transform: translate(-50%, -50%);
+        }
+
+        /* The avatar with highlight */
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid transparent;
+            transition: border 0.3s ease;
+            display: block;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .avatar.sitting-out {
+            opacity: 0.5;
+            filter: grayscale(50%);
+        }
+
+        .highlight-turn {
+            border-color: yellow;
+        }
+
+        .player-name {
+            margin-top: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .player-chips {
+            margin-top: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            color: gold;
+            text-shadow: 0 0 3px black;
+        }
+        .player-action-text {
+            margin-top: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            min-height: 18px;
+        }
+        /* Container for the avatar and buttons */
+        .player-controls {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        /* Left and right buttons vertical stack */
+        .left-buttons, .right-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 60px;
+        }
+
+        .left-buttons button, .right-buttons button {
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            border: none;
+        }
+
+        /* Raise input styling */
+        .raise-input {
+            width: 60px;
+            padding: 5px;
+            font-size: 12px;
+            margin-top: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            display: block;
+            text-align: center;
+        }
+
+        /* Positions around table */
+        .slot0 { top: 82%; left: 59%; }
+        .slot1 { top: 82%; left: 40.5%; }
+        .slot2 { top: 77%; left: 22.5%; }
+        .slot3 { top: 51%; left: 15%; }
+        .slot4 { top: 23%; left: 22.5%; }
+        .slot5 { top: 18%; left: 40.5%; }
+        .slot6 { top: 18%; left: 59%; }
+        .slot7 { top: 23%; left: 77.5%; }
+        .slot8 { top: 51%; left: 85%; }
+        .slot9 { top: 77%; left: 77.5%; }
+
+        /* Hole cards container and styling */
+        .hole-cards {
+            position: absolute;
+            display: flex;
+            gap: 5px;
+            z-index: 3;
+            /* Default position - adjust per slot below */
+            top: -50px; /* example offset above avatar */
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .hole-card {
+            width: 50px;
+            height: 75px;
+            border-radius: 6px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.7);
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .position-indicators {
+    position: absolute;
+    top: -25px;  /* Adjust based on your layout */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;  /* Above other elements */
+    display: flex;
+    gap: 5px;
+}
+
+.dealer-button, .small-blind, .big-blind {
+    background: white;
+    color: black;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    margin: 2px;
+}
+        .community-cards {
+            top: 44%;
+            position: absolute;
+            left: 37%;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .community-card {
+            width: 70px;
+            height: 100px;
+        }
+        .pot-display {
+            position: absolute;
+            top: 57.5%; /* Adjust this to position below community cards */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: yellow;
+            text-shadow: 0 0 5px black;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 15px;
+            border-radius: 10px;
+            z-index: 20;
+        }
+
+        /* NEW: Hand description styling for showdown */
+        .hand-description {
+            position: absolute;
+            top: -90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 15;
+            display: none;
+            white-space: nowrap;
+            border: 1px solid gold;
+        }
+
+        /* Control panels */
+        #sit-out-controls, #buy-back-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 10px;
+            z-index: 100;
+        }
+
+        #buy-back-controls {
+            display: none;
+        }
+
+        .sit-out-checkbox, .buy-back-checkbox {
+            margin-right: 8px;
+        }
+
+        .sit-out-label, .buy-back-label {
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* Custom positions and rotation for hole cards per slot */
+        .slot0 .hole-cards {
+            top: -70px;
+            left: 50%;
+            transform: translateX(-50%) rotate(0deg);
+        }
+        .slot1 .hole-cards {
+            top: -70px;
+            left: 50%;
+            transform: translateX(-50%) rotate(0deg);
+        }
+        .slot2 .hole-cards {
+            top: -50px;
+            left: 90%;
+            transform: translateX(-50%) rotate(45deg);
+        }
+        .slot3 .hole-cards {
+            top: 10%;
+            left: 100%;
+            transform: translateX(-50%) rotate(90deg);
+        }
+        .slot4 .hole-cards {
+            top: 90px;
+            left: 110%;
+            transform: translateX(-50%) rotate(135deg);
+        }
+        .slot5 .hole-cards {
+            top: 100%;
+            left: 55%;
+            transform: translateX(-50%) rotate(180deg);
+        }
+        .slot6 .hole-cards {
+            top: 100%;
+            left: 55%;
+            transform: translateX(-50%) rotate(180deg);
+        }
+        .slot7 .hole-cards {
+            top: 120px;
+            left: 5%;
+            transform: translateX(-50%) rotate(225deg);
+        }
+        .slot8 .hole-cards {
+            top: 30px;
+            left: 0%;
+            transform: translateX(-50%) rotate(-90deg);
+        }
+        .slot9 .hole-cards {
+            top: -50px;
+            left: 10%;
+            transform: translateX(-50%) rotate(-45deg);
+        }
+
+        /* NEW: Custom positions for hand descriptions */
+        .slot0 .hand-description { top: -90px; }
+        .slot1 .hand-description { top: -90px; }
+        .slot2 .hand-description { top: -80px; transform: translateX(-50%) rotate(45deg); }
+        .slot3 .hand-description { top: -40px; transform: translateX(-50%) rotate(90deg); }
+        .slot4 .hand-description { top: 60px; transform: translateX(-50%) rotate(135deg); }
+        .slot5 .hand-description { top: 120px; transform: translateX(-50%) rotate(180deg); }
+        .slot6 .hand-description { top: 120px; transform: translateX(-50%) rotate(180deg); }
+        .slot7 .hand-description { top: 100px; transform: translateX(-50%) rotate(225deg); }
+        .slot8 .hand-description { top: 10px; transform: translateX(-50%) rotate(-90deg); }
+        .slot9 .hand-description { top: -80px; transform: translateX(-50%) rotate(-45deg); }
+
+        /* Tilted action buttons for angled positions */
+        .slot2 .player-controls {
+            transform: rotate(45deg);
+        }
+        .slot3 .player-controls {
+            transform: rotate(90deg);
+        }
+        .slot4 .player-controls {
+            transform: rotate(135deg);
+        }
+        .slot7 .player-controls {
+            transform: rotate(225deg);
+        }
+        .slot8 .player-controls {
+            transform: rotate(-90deg);
+        }
+        .slot9 .player-controls {
+            transform: rotate(-45deg);
+        }
+
+        /* Ensure buttons remain usable after rotation */
+        .slot2 .left-buttons button, 
+        .slot2 .right-buttons button,
+        .slot3 .left-buttons button, 
+        .slot3 .right-buttons button,
+        .slot4 .left-buttons button, 
+        .slot4 .right-buttons button,
+        .slot7 .left-buttons button, 
+        .slot7 .right-buttons button,
+        .slot8 .left-buttons button, 
+        .slot8 .right-buttons button,
+        .slot9 .left-buttons button, 
+        .slot9 .right-buttons button {
+            transform: rotate(0deg);
+        }
+
+        .raise-controls {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            margin-top: 5px;
+        }
+        /* Winner animation styles */
+        #winner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            flex-direction: column;
+        }
+        
+        #winner-message {
+            font-size: 48px;
+            color: gold;
+            text-shadow: 0 0 10px rgba(255,215,0,0.8);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .chip-animation {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-image: url('/static/Chips/chips1.png');
+            background-size: cover;
+            border-radius: 50%;
+            z-index: 1500;
+            transition: all 1s ease-in-out;
+        }
+
+        /* NEW: Analysis Sidebar Styles */
+        #analysis-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px; /* Start off-screen */
+            width: 400px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            z-index: 3000;
+            transition: right 0.3s ease;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #analysis-sidebar.expanded {
+            right: 0;
+            width: 80vw;
+        }
+
+        #analysis-sidebar.collapsed {
+            right: 0;
+            width: 400px;
+        }
+
+        .analysis-header {
+            background: #2196F3;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .analysis-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .analysis-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .analysis-controls button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .analysis-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Personal Analysis Styles */
+        .personal-analysis {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .personal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .personal-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .personal-style {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .personal-risk-score {
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .risk-low { background-color: #4CAF50; }
+        .risk-medium { background-color: #FF9800; }
+        .risk-high { background-color: #F44336; }
+
+        .personal-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .personal-stat-card {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #2196F3;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .personal-stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        .personal-stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .personal-positional-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .personal-position-card {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            min-width: 120px;
+            margin: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .personal-action-breakdown {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+        }
+
+        .personal-action-item {
+            text-align: center;
+            padding: 8px;
+        }
+
+        .personal-action-count {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        .personal-summary {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            border: 1px solid #ddd;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .download-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .download-btn:hover {
+            background: #45a049;
+        }
+
+        /* Analysis Button */
+        #analysis-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 5px;
+            z-index: 2500;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            display: none; /* Hidden by default */
+            font-weight: bold;
+        }
+
+        #analysis-button:hover {
+            background: #45a049;
+        }
+
+        /* ANALYSIS MODAL (for end of game) */
+        #analysis-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 4000;
+        }
+    </style>
+</head>
+<body>
+    <!-- TIMER DISPLAY -->
+    <div id="timer-display">
+        Time Left: <span id="time-left">--:--</span>
+    </div>
+    
+    <!-- STATUS BAR -->
+    <div id="status-bar">Status: {{ round_stage }}</div>
+    
+    <!-- CONTROL PANELS -->
+    <div id="sit-out-controls">
+        <label class="sit-out-label" id="sit-out-label">
+            <input type="checkbox" class="sit-out-checkbox" id="sit-out-checkbox" onchange="toggleSitOut()">
+            <span id="sit-out-text">Sit Out Next Round</span>
+        </label>
+    </div>
+    
+    <div id="buy-back-controls">
+        <label class="buy-back-label" id="buy-back-label">
+            <input type="checkbox" class="buy-back-checkbox" id="buy-back-checkbox" onchange="toggleBuyBack()">
+            <span id="buy-back-text">Buy Back In Next Round (${{ game.buy_in }})</span>
+        </label>
+    </div>
+    
+    <!-- ANALYSIS BUTTON -->
+    <div id="analysis-button" onclick="toggleAnalysisSidebar()">
+        📊 My Stats
+    </div>
+    
+    <div id="table-container">
+        {% for player in players %}
+            {% set i = loop.index0 %}
+            <div class="player-slot slot{{ i }}" data-player-id="{{ player.id }}">
+                <!-- NEW: Hand description display -->
+                <div class="hand-description" id="hand-description-{{ player.id }}"></div>
+                
+                <!-- Hole cards display -->
+                <div class="hole-cards">
+                    {% for card in player.holecards %}
+                        {% set angle = (loop.index0 * 15) - 7 %}
+                        <img src="{{ url_for('static', filename='cards/' + card.image_filename) }}" alt="card" class="hole-card" style="transform: rotate({{ angle }}deg);">
+                    {% endfor %}
+                </div>
+                <div class="position-indicators">
+                    <div class="dealer-button" 
+                        style="display: {% if i == dealer_position %}block{% else %}none{% endif %};">
+                        D
+                    </div>
+                    <div class="small-blind" 
+                        style="display: {% if i == small_blind_pos %}block{% else %}none{% endif %};">
+                        SB
+                    </div>
+                    <div class="big-blind" 
+                        style="display: {% if i == big_blind_pos %}block{% else %}none{% endif %};">
+                        BB
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <!-- LEFT BUTTONS -->
+                    <div class="left-buttons" id="left-buttons-{{ player.id }}" style="display:none;">
+                        <button onclick="sendAction('check')">Check</button>
+                        <button onclick="sendAction('call')">Call</button>
+                    </div>
+
+                    <img src="{{ url_for('static', filename=player.avatar) }}" class="avatar" id="avatar-{{ player.id }}" alt="avatar">
+
+                    <!-- RIGHT BUTTONS -->
+                    <div class="right-buttons" id="right-buttons-{{ player.id }}" style="display:none;">
+                        <button id="raise-btn-{{ player.id }}" onclick="showRaiseInput('{{ player.id }}')">Raise</button>
+                        <button onclick="sendAction('fold')">Fold</button>
+                        <div id="raise-controls-{{ player.id }}" class="raise-controls" style="display:none;">
+                            <input type="number" id="raise-input-{{ player.id }}" 
+                                class="raise-input" placeholder="Amount"
+                                onkeydown="handleRaiseKeyDown(event, '{{ player.id }}')">
+                            <button onclick="submitRaise('{{ player.id }}')">Submit</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="player-name">{{ player.name }}</div>
+                <div class="player-chips" id="chips-{{ player.id }}">{{ player.money }} chips</div>
+                <div class="player-action-text" id="action-{{ player.id }}">
+                    {% if player.money <= 0 %}OUT{% else %}{{ player.last_action or '' }}{% endif %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="community-cards">
+            {% for card_data in community_cards %}
+                <img src="{{ url_for('static', filename='cards/' + card_data['image_filename']) }}" class="card community-card" alt="Community Card">
+            {% endfor %}
+        </div>
+        <div class="pot-display">
+            Pot Total: <span id="pot-amount">{{ game.active_pot if game.active_pot else 0 }}</span>
+        </div>
+        <div id="winner-overlay" style="display:none;">
+            <div id="winner-message"></div>
+            <div>Starting new hand in <span id="countdown">5</span> seconds...</div>
+        </div>
+    </div>
+
+    <!-- ANALYSIS SIDEBAR -->
+    <div id="analysis-sidebar" class="collapsed">
+        <div class="analysis-header">
+            <div class="analysis-title">Player Analysis</div>
+            <div class="analysis-controls">
+                <button id="expand-btn" onclick="toggleAnalysisSize()">⛶ Expand</button>
+                <button onclick="toggleAnalysisSidebar()">✕ Close</button>
+            </div>
+        </div>
+        <div class="analysis-content" id="analysis-content">
+            <div id="personal-analysis-container">
+                <!-- Personal analysis will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ANALYSIS MODAL (for end of game) -->
+    <div id="analysis-modal" style="display:none;">
+        <div id="analysis-modal-content" style="background: white; padding: 20px; border-radius: 10px; max-width: 90%; max-height: 90%; overflow-y: auto; color: black;">
+            <h2>Game Analysis Report</h2>
+            <div id="analysis-reports-container"></div>
+            <button onclick="closeAnalysisModal()" style="margin-top: 20px; padding: 10px 20px;">Close</button>
+            <a href="/analysis/{{ code }}" style="margin-left: 10px; padding: 10px 20px; background: #2196F3; color: white; text-decoration: none;">
+                View Full Analysis
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        const gameCode = "{{ code }}";
+        const sessionPlayerId = "{{ session_player_id }}";
+        const currentPlayerId = "{{ current_player_id }}";
+        const buyInAmount = {{ game.buy_in }};
+        let currentStage = "{{ round_stage }}";
+        let firstHandCompleted = {{ first_hand_completed | tojson }};
+
+        // Store initial game state
+        let gameState = {
+            players: {{ players | tojson }},
+            community_cards: {{ community_cards | tojson }},
+            current_player_index: {{ current_player_index }}
+        };
+
+        // Show analysis button if first hand completed
+        if (firstHandCompleted) {
+            document.getElementById('analysis-button').style.display = 'block';
+        }
+
+        // Initialize buttons for the current player immediately
+        function initButtons() {
+            const avatar = document.getElementById(`avatar-${currentPlayerId}`);
+            const leftButtons = document.getElementById(`left-buttons-${currentPlayerId}`);
+            const rightButtons = document.getElementById(`right-buttons-${currentPlayerId}`);
+            
+            if (avatar) avatar.classList.add('highlight-turn');
+            if (currentPlayerId === sessionPlayerId) {
+                if (leftButtons) leftButtons.style.display = 'flex';
+                if (rightButtons) rightButtons.style.display = 'flex';
+            }
+        }
+
+        socket.emit('join_room', { code: gameCode });
+
+        // NEW: Handle time updates
+        socket.on('time_update', function(data) {
+            const timeLeft = document.getElementById('time-left');
+            const minutes = data.minutes.toString().padStart(2, '0');
+            const seconds = data.seconds.toString().padStart(2, '0');
+            timeLeft.textContent = `${minutes}:${seconds}`;
+            
+            // Change color when time is running low
+            if (data.total_seconds < 60) {
+                timeLeft.style.color = '#ff4444';
+            } else if (data.total_seconds < 300) {
+                timeLeft.style.color = '#ffaa00';
+            } else {
+                timeLeft.style.color = 'white';
+            }
+        });
+
+        // NEW: Handle time expiration - redirect to game_over_time.html
+        socket.on('time_expired', function() {
+            document.getElementById('status-bar').textContent = 'Time expired! Finishing current hand...';
+        });
+
+        // NEW: Handle game over due to time - redirect to dedicated page
+        socket.on('game_over_time', function() {
+            window.location.href = `/game_over_time/${gameCode}`;
+        });
+
+        // NEW: Handle game over due to buy-in - redirect to dedicated page  
+        socket.on('game_over_buyin', function() {
+            window.location.href = `/game_over_buyin/${gameCode}`;
+        });
+
+        // NEW: Handle personal analysis report
+        socket.on('personal_analysis_report', function(data) {
+            displayPersonalAnalysis(data);
+        });
+
+        // NEW: Handle game analysis report (end of game)
+        socket.on('game_analysis_report', function(data) {
+            console.log('Game analysis report received', data);
+            showAnalysisModal(data.reports);
+        });
+
+        // NEW: Handle player bought back
+        socket.on('player_bought_back', function(data) {
+            if (data.player_id === sessionPlayerId) {
+                // Update local display
+                const chipsEl = document.getElementById(`chips-${sessionPlayerId}`);
+                if (chipsEl) chipsEl.textContent = `${data.new_money} chips`;
+                
+                const actionEl = document.getElementById(`action-${sessionPlayerId}`);
+                if (actionEl) actionEl.textContent = '';
+                
+                // Show sit out controls, hide buy back controls
+                document.getElementById('sit-out-controls').style.display = 'block';
+                document.getElementById('buy-back-controls').style.display = 'none';
+            }
+        });
+
+        // NEW: Toggle analysis sidebar
+        function toggleAnalysisSidebar() {
+            const sidebar = document.getElementById('analysis-sidebar');
+            if (sidebar.classList.contains('collapsed') || sidebar.classList.contains('expanded')) {
+                // Sidebar is visible, hide it
+                sidebar.style.right = '-400px';
+                setTimeout(() => {
+                    sidebar.classList.remove('collapsed', 'expanded');
+                }, 300);
+            } else {
+                // Sidebar is hidden, show it and request personal analysis
+                sidebar.classList.add('collapsed');
+                sidebar.style.right = '0';
+                requestPersonalAnalysis();
+            }
+        }
+
+        // NEW: Toggle analysis size
+        function toggleAnalysisSize() {
+            const sidebar = document.getElementById('analysis-sidebar');
+            const expandBtn = document.getElementById('expand-btn');
+            
+            if (sidebar.classList.contains('collapsed')) {
+                sidebar.classList.remove('collapsed');
+                sidebar.classList.add('expanded');
+                expandBtn.textContent = '⛶ Shrink';
+            } else {
+                sidebar.classList.remove('expanded');
+                sidebar.classList.add('collapsed');
+                expandBtn.textContent = '⛶ Expand';
+            }
+        }
+
+        // NEW: Request personal analysis
+        function requestPersonalAnalysis() {
+            socket.emit('request_personal_analysis', {
+                code: gameCode,
+                player_id: sessionPlayerId
+            });
+        }
+
+        // NEW: Display personal analysis
+        function displayPersonalAnalysis(data) {
+            const container = document.getElementById('personal-analysis-container');
+            const riskClass = data.risk_score < 33 ? 'risk-low' : 
+                            data.risk_score < 66 ? 'risk-medium' : 'risk-high';
+            
+            container.innerHTML = `
+                <div class="personal-analysis">
+                    <div class="personal-header">
+                        <div>
+                            <div class="personal-name">${data.player_name}</div>
+                            <div class="personal-style">${data.style} - ${data.player_type}</div>
+                        </div>
+                        <div class="personal-risk-score ${riskClass}">
+                            Risk Score: ${data.risk_score.toFixed(1)}/100
+                        </div>
+                    </div>
+
+                    <div class="personal-stats-grid">
+                        <div class="personal-stat-card">
+                            <div class="personal-stat-value">${data.stats.vpip.toFixed(1)}%</div>
+                            <div class="personal-stat-label">VPIP</div>
+                        </div>
+                        <div class="personal-stat-card">
+                            <div class="personal-stat-value">${data.stats.pfr.toFixed(1)}%</div>
+                            <div class="personal-stat-label">PFR</div>
+                        </div>
+                        <div class="personal-stat-card">
+                            <div class="personal-stat-value">${data.stats.aggression_frequency.toFixed(1)}%</div>
+                            <div class="personal-stat-label">Aggression Frequency</div>
+                        </div>
+                        <div class="personal-stat-card">
+                            <div class="personal-stat-value">${data.stats.win_rate.toFixed(1)}%</div>
+                            <div class="personal-stat-label">Win Rate</div>
+                        </div>
+                        <div class="personal-stat-card">
+                            <div class="personal-stat-value">$${data.total_profit.toFixed(2)}</div>
+                            <div class="personal-stat-label">Total Profit</div>
+                        </div>
+                        <div class="personal-stat-card">
+                            <div class="personal-stat-value">$${data.total_buy_ins.toFixed(2)}</div>
+                            <div class="personal-stat-label">Total Buy-ins</div>
+                        </div>
+                    </div>
+
+                    <h4>Positional Analysis</h4>
+                    <div class="personal-positional-stats">
+                        <div class="personal-position-card">
+                            <h5>Early Position</h5>
+                            <div>VPIP: ${data.positional_stats.early.vpip.toFixed(1)}%</div>
+                            <div>PFR: ${data.positional_stats.early.pfr.toFixed(1)}%</div>
+                            <div>Hands: ${data.positional_stats.early.hands}</div>
+                        </div>
+                        <div class="personal-position-card">
+                            <h5>Middle Position</h5>
+                            <div>VPIP: ${data.positional_stats.middle.vpip.toFixed(1)}%</div>
+                            <div>PFR: ${data.positional_stats.middle.pfr.toFixed(1)}%</div>
+                            <div>Hands: ${data.positional_stats.middle.hands}</div>
+                        </div>
+                        <div class="personal-position-card">
+                            <h5>Late Position</h5>
+                            <div>VPIP: ${data.positional_stats.late.vpip.toFixed(1)}%</div>
+                            <div>PFR: ${data.positional_stats.late.pfr.toFixed(1)}%</div>
+                            <div>Hands: ${data.positional_stats.late.hands}</div>
+                        </div>
+                    </div>
+
+                    <h4>Action Distribution</h4>
+                    <div class="personal-action-breakdown">
+                        <div class="personal-action-item">
+                            <div class="personal-action-count">${data.stats.total_raises}</div>
+                            <div>Raises</div>
+                        </div>
+                        <div class="personal-action-item">
+                            <div class="personal-action-count">${data.stats.total_calls}</div>
+                            <div>Calls</div>
+                        </div>
+                        <div class="personal-action-item">
+                            <div class="personal-action-count">${data.stats.total_checks}</div>
+                            <div>Checks</div>
+                        </div>
+                        <div class="personal-action-item">
+                            <div class="personal-action-count">${data.stats.total_folds}</div>
+                            <div>Folds</div>
+                        </div>
+                    </div>
+
+                    <h4>Detailed Analysis</h4>
+                    <div class="personal-summary">${data.summary}</div>
+                    
+                    <button class="download-btn" onclick="downloadPersonalReport('${data.player_name}', ${JSON.stringify(data).replace(/'/g, "\\'")})">
+                        📥 Download My Report
+                    </button>
+                </div>
+            `;
+        }
+
+        // NEW: Download personal report
+        function downloadPersonalReport(playerName, reportData) {
+            const blob = new Blob([reportData.summary], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${playerName}_Poker_Analysis.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // NEW: Show analysis modal (for end of game)
+        function showAnalysisModal(reports) {
+            const container = document.getElementById('analysis-reports-container');
+            let html = '';
+            
+            for (const [playerName, report] of Object.entries(reports)) {
+                const riskClass = report.risk_score < 33 ? 'risk-low' : 
+                                report.risk_score < 66 ? 'risk-medium' : 'risk-high';
+                
+                html += `
+                    <div style="border: 1px solid #ddd; margin: 10px 0; padding: 15px;">
+                        <h3>${playerName} - ${report.style}</h3>
+                        <p><strong>Risk Score:</strong> ${report.risk_score.toFixed(1)}/100</p>
+                        <p><strong>VPIP:</strong> ${report.stats.vpip.toFixed(1)}%</p>
+                        <p><strong>PFR:</strong> ${report.stats.pfr.toFixed(1)}%</p>
+                        <p><strong>Win Rate:</strong> ${report.stats.win_rate.toFixed(1)}%</p>
+                        <p><strong>Total Profit:</strong> $${report.total_profit.toFixed(2)}</p>
+                        <p><strong>Total Buy-ins:</strong> $${report.total_buy_ins.toFixed(2)}</p>
+                        <button onclick="this.nextElementSibling.style.display='block'; this.style.display='none'">
+                            Show Detailed Report
+                        </button>
+                        <div style="display: none; white-space: pre-wrap; background: #f5f5f5; padding: 10px; margin-top: 10px;">
+                            ${report.summary}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+            document.getElementById('analysis-modal').style.display = 'flex';
+        }
+
+        // NEW: Close analysis modal
+        function closeAnalysisModal() {
+            document.getElementById('analysis-modal').style.display = 'none';
+        }
+
+        // NEW: Handle first hand completed
+        socket.on('new_hand_started', function(data) {
+            // Show analysis button if first hand completed
+            if (data.first_hand_completed) {
+                document.getElementById('analysis-button').style.display = 'block';
+                firstHandCompleted = true;
+            }
+            
+            // Hide winner overlay if shown
+            document.getElementById('winner-overlay').style.display = 'none';
+    
+            // Update game state
+            gameState = data;
+    
+            // Update dealer/sb/bb indicators
+            document.querySelectorAll('.dealer-button, .small-blind, .big-blind').forEach(el => {
+            el.style.display = 'none';
+        });
+
+        if (data.players[data.dealer_position]) {
+            const dealerId = data.players[data.dealer_position].id;
+            const dealerEl = document.querySelector(`.player-slot[data-player-id="${dealerId}"] .dealer-button`);
+        if (dealerEl) {
+            dealerEl.style.display = 'block';
+            console.log("Showing dealer button for player:", dealerId);
+        }
+}
+
+if (data.players[data.small_blind_pos]) {
+    const sbId = data.players[data.small_blind_pos].id;
+    const sbEl = document.querySelector(`.player-slot[data-player-id="${sbId}"] .small-blind`);
+    if (sbEl) sbEl.style.display = 'block';
+}
+
+if (data.players[data.big_blind_pos]) {
+    const bbId = data.players[data.big_blind_pos].id;
+    const bbEl = document.querySelector(`.player-slot[data-player-id="${bbId}"] .big-blind`);
+    if (bbEl) bbEl.style.display = 'block';
+}
+
+// Update pot display with the actual pot amount from server
+if (data.pot !== undefined) {
+    document.getElementById('pot-amount').textContent = data.pot;
+}
+    
+    // Update community cards
+    const communityCardsDiv = document.querySelector('.community-cards');
+    communityCardsDiv.innerHTML = '';
+    data.community_cards.forEach(card => {
+        const img = document.createElement('img');
+        img.src = `/static/cards/${card.image_filename}`;
+        img.className = 'card community-card';
+        img.onerror = () => img.src = '/static/cards/back01.png';
+        communityCardsDiv.appendChild(img);
+    });
+    
+    // NEW: Hide all hand descriptions and reset hole card visibility
+    document.querySelectorAll('.hand-description').forEach(el => {
+        el.style.display = 'none';
+        el.textContent = '';
+    });
+    
+    // Update player displays including sit out status and OUT status
+    data.players.forEach(player => {
+        // Update chips and bets
+        const chipsEl = document.getElementById(`chips-${player.id}`);
+        if (chipsEl) chipsEl.textContent = `${player.money} chips`;
+        
+        const actionEl = document.getElementById(`action-${player.id}`);
+        if (actionEl) {
+            if (player.money <= 0) {
+                actionEl.textContent = 'OUT';
+            } else {
+                actionEl.textContent = player.last_action || '';
+            }
+        }
+        
+        // Update avatar opacity based on sit out status
+        const avatar = document.getElementById(`avatar-${player.id}`);
+        if (avatar) {
+            if (player.sitting_out) {
+                avatar.classList.add('sitting-out');
+            } else {
+                avatar.classList.remove('sitting-out');
+            }
+        }
+        
+        // Update hole cards - revert to normal visibility (only own cards visible)
+        const holeCardsDiv = document.querySelector(`[data-player-id="${player.id}"] .hole-cards`);
+        if (holeCardsDiv) {
+            holeCardsDiv.innerHTML = '';
+            player.holecards.forEach((card, i) => {
+                const angle = (i * 15) - 7;
+                const img = document.createElement('img');
+                // Only show cards to their owner (normal visibility)
+                img.src = player.id === sessionPlayerId 
+                    ? `/static/cards/${card.image_filename}`
+                    : '/static/cards/back01.png';
+                img.className = 'hole-card';
+                img.style.transform = `rotate(${angle}deg)`;
+                img.onerror = () => img.src = '/static/cards/back01.png';
+                holeCardsDiv.appendChild(img);
+            });
+        }
+    });
+    
+    // Update status bar
+    document.getElementById('status-bar').textContent = 'Status: pre-flop';
+    
+    // Update control panels based on current player's status
+    updatePlayerControls();
+    
+    // Highlight current player
+    const currentPlayerId = data.players[data.current_player_index].id;
+    emitTurnUpdate(currentPlayerId);
+});
+
+        // NEW: Handle showdown cards - reveal all hole cards and show hand descriptions
+        socket.on('showdown_cards', function(data) {
+            data.players.forEach(player => {
+                const holeCardsDiv = document.querySelector(`[data-player-id="${player.id}"] .hole-cards`);
+                if (holeCardsDiv) {
+                    holeCardsDiv.innerHTML = '';
+                    player.holecards.forEach((card, i) => {
+                        const angle = (i * 15) - 7;
+                        const img = document.createElement('img');
+                        // Show actual cards for all players during showdown
+                        img.src = `/static/cards/${card.image_filename}`;
+                        img.className = 'hole-card';
+                        img.style.transform = `rotate(${angle}deg)`;
+                        img.onerror = () => img.src = '/static/cards/back01.png';
+                        holeCardsDiv.appendChild(img);
+                    });
+                }
+                
+                // Show hand description if player has one
+                const handDescEl = document.getElementById(`hand-description-${player.id}`);
+                if (handDescEl && player.hand_description) {
+                    handDescEl.textContent = player.hand_description;
+                    handDescEl.style.display = 'block';
+                }
+            });
+        });
+
+        // NEW: Update player controls based on current status
+        function updatePlayerControls() {
+            const currentPlayer = gameState.players.find(p => p.id === sessionPlayerId);
+            if (currentPlayer) {
+                const sitOutControls = document.getElementById('sit-out-controls');
+                const buyBackControls = document.getElementById('buy-back-controls');
+                
+                if (currentPlayer.money <= 0) {
+                    sitOutControls.style.display = 'none';
+                    buyBackControls.style.display = 'block';
+                } else {
+                    sitOutControls.style.display = 'block';
+                    buyBackControls.style.display = 'none';
+                }
+            }
+        }
+
+        // NEW: Toggle buy back
+        function toggleBuyBack() {
+            const checkbox = document.getElementById('buy-back-checkbox');
+            const buyBack = checkbox.checked;
+            
+            if (buyBack) {
+                socket.emit('buy_back_in', {
+                    code: gameCode,
+                    player_id: sessionPlayerId
+                });
+            }
+        }
+
+        // On turn update, show buttons only for current player, hide for others
+        socket.on('turn_update', data => {
+            const currentId = data.current_player_id;
+
+            document.querySelectorAll('.player-slot').forEach(slot => {
+                const pid = slot.dataset.playerId;
+                const avatar = document.getElementById(`avatar-${pid}`);
+                const leftButtons = document.getElementById(`left-buttons-${pid}`);
+                const rightButtons = document.getElementById(`right-buttons-${pid}`);
+
+                if (pid === currentId) {
+                    if (avatar) avatar.classList.add('highlight-turn');
+                    if (pid === sessionPlayerId) {
+                        if (leftButtons) leftButtons.style.display = 'flex';
+                        if (rightButtons) rightButtons.style.display = 'flex';
+                    } else {
+                        if (leftButtons) leftButtons.style.display = 'none';
+                        if (rightButtons) rightButtons.style.display = 'none';
+                    }
+                } else {
+                    if (avatar) avatar.classList.remove('highlight-turn');
+                    if (leftButtons) leftButtons.style.display = 'none';
+                    if (rightButtons) {
+                        rightButtons.style.display = 'none';
+                        const raiseControls = document.getElementById(`raise-controls-${pid}`);
+                        if (raiseControls) raiseControls.style.display = 'none';
+                        const raiseBtn = document.getElementById(`raise-btn-${pid}`);
+                        if (raiseBtn) raiseBtn.style.display = 'inline-block';
+                    }
+                }
+            });
+        });
+
+        socket.on('update_action', data => {
+            const el = document.getElementById(`action-${data.player_id}`);
+            if (el) {
+                // Only update action text if player has money
+                const player = gameState.players.find(p => p.id === data.player_id);
+                if (player && player.money > 0) {
+                    el.textContent = data.action_text;
+                }
+            }
+            const chipsEl = document.getElementById(`chips-${data.player_id}`);
+            if (chipsEl) {
+                chipsEl.textContent = data.money + ' chips';
+                
+                // Update OUT status if player runs out of money
+                const actionEl = document.getElementById(`action-${data.player_id}`);
+                if (data.money <= 0 && actionEl) {
+                    actionEl.textContent = 'OUT';
+                }
+            }
+            const potEl = document.getElementById('pot-amount');
+            if (potEl && data.pot !== undefined) {
+                potEl.textContent = data.pot;
+            }
+            
+            // Update controls if this is the session player
+            if (data.player_id === sessionPlayerId) {
+                updatePlayerControls();
+            }
+        });
+
+        // Handle sit out updates
+        socket.on('player_sit_out_updated', function(data) {
+            // Update the checkbox for the current player
+            if (data.player_id === sessionPlayerId) {
+                const checkbox = document.getElementById('sit-out-checkbox');
+                const sitOutText = document.getElementById('sit-out-text');
+                
+                if (data.sit_out_next_hand) {
+                    sitOutText.textContent = 'Re-join Next Round';
+                } else {
+                    sitOutText.textContent = 'Sit Out Next Round';
+                }
+                checkbox.checked = data.sit_out_next_hand;
+            }
+        });
+
+        // Handle community card updates
+        socket.on('update_community_cards', function(data) {
+            const communityCardsDiv = document.querySelector('.community-cards');
+            communityCardsDiv.innerHTML = '';
+            
+            data.community_cards.forEach(card => {
+                const img = document.createElement('img');
+                img.src = `/static/cards/${card.image_filename}`;
+                img.className = 'card community-card';
+                communityCardsDiv.appendChild(img);
+            });
+        });
+
+        // Handle stage updates
+        socket.on('update_stage', function(data) {
+            const statusBar = document.getElementById('status-bar');
+            
+            // Update temporary status if provided
+            if (data.temp_status) {
+                statusBar.textContent = data.temp_status;
+                
+                // Clear temporary status after 2 seconds if it's not the final status
+                if (!data.temp_status.includes('Game over')) {
+                    setTimeout(() => {
+                        if (statusBar.textContent === data.temp_status) {
+                            statusBar.textContent = `Status: ${data.stage}`;
+                        }
+                    }, 2000);
+                }
+            } 
+            // Update main status
+            else if (data.stage) {
+                currentStage = data.stage;
+                statusBar.textContent = `Status: ${data.stage}`;
+            }
+        });
+
+        // Handle showdown results
+        socket.on('showdown_results', function(data) {
+            // Show winner overlay
+            const overlay = document.getElementById('winner-overlay');
+            const message = document.getElementById('winner-message');
+            overlay.style.display = 'flex';
+            
+            // Create winner message
+            const winners = {};
+            data.winners.forEach(win => {
+                const player = gameState.players.find(p => p.id === win.player_id);
+                if (player) {
+                    if (!winners[player.name]) winners[player.name] = 0;
+                    winners[player.name] += win.amount;
+                }
+            });
+            
+            let winnerText = '';
+            for (const [name, amount] of Object.entries(winners)) {
+                winnerText += `${name} wins ${Math.round(amount)} chips!<br>`;
+            }
+            
+            message.innerHTML = winnerText;
+            
+            // Start countdown
+            let count = 5;
+            const countdownEl = document.getElementById('countdown');
+            countdownEl.textContent = count;
+            
+            const countdown = setInterval(() => {
+                count--;
+                countdownEl.textContent = count;
+                if (count <= 0) {
+                    clearInterval(countdown);
+                    // Don't hide here - wait for new_hand_started
+                }
+            }, 1000);
+            
+            // Animate chips to winners
+            const potEl = document.querySelector('.pot-display');
+            data.winners.forEach(win => {
+                const winnerEl = document.querySelector(`.player-slot[data-player-id="${win.player_id}"] .avatar`);
+                if (potEl && winnerEl) {
+                    const potRect = potEl.getBoundingClientRect();
+                    const winnerRect = winnerEl.getBoundingClientRect();
+                    
+                    for (let i = 0; i < 10; i++) {
+                        setTimeout(() => {
+                            const chip = document.createElement('div');
+                            chip.className = 'chip-animation';
+                            chip.style.left = (potRect.left + potRect.width/2 - 20) + 'px';
+                            chip.style.top = (potRect.top + potRect.height/2 - 20) + 'px';
+                            document.body.appendChild(chip);
+                            
+                            setTimeout(() => {
+                                chip.style.left = (winnerRect.left + winnerRect.width/2 - 20) + 'px';
+                                chip.style.top = (winnerRect.top + winnerRect.height/2 - 20) + 'px';
+                                
+                                setTimeout(() => {
+                                    chip.remove();
+                                }, 1000);
+                            }, 100);
+                        }, i * 200);
+                    }
+                }
+            });
+        });
+        
+        // Add error handling
+        socket.on('error', function(data) {
+            alert('Error: ' + data.msg);
+            // Restore buttons for current player
+            const avatar = document.getElementById(`avatar-${currentPlayerId}`);
+            const leftButtons = document.getElementById(`left-buttons-${currentPlayerId}`);
+            const rightButtons = document.getElementById(`right-buttons-${currentPlayerId}`);
+            
+            if (avatar) avatar.classList.add('highlight-turn');
+            if (currentPlayerId === sessionPlayerId) {
+                if (leftButtons) leftButtons.style.display = 'flex';
+                if (rightButtons) rightButtons.style.display = 'flex';
+            }
+        });
+        
+        
+        function emitTurnUpdate(playerId) {
+    // Reset all highlights first
+    document.querySelectorAll('.avatar').forEach(avatar => {
+        avatar.classList.remove('highlight-turn');
+    });
+    
+    // Hide all buttons first
+    document.querySelectorAll('.left-buttons, .right-buttons').forEach(el => {
+        el.style.display = 'none';
+    });
+
+    // Highlight current player
+    const currentAvatar = document.getElementById(`avatar-${playerId}`);
+    if (currentAvatar) {
+        currentAvatar.classList.add('highlight-turn');
+    }
+
+    // Show buttons only for current player if it's session player
+    if (playerId === sessionPlayerId) {
+        const leftButtons = document.getElementById(`left-buttons-${playerId}`);
+        const rightButtons = document.getElementById(`right-buttons-${playerId}`);
+        
+        if (leftButtons) {
+            leftButtons.style.display = 'flex';
+            // Reset raise controls
+            const raiseControls = document.getElementById(`raise-controls-${playerId}`);
+            const raiseBtn = document.getElementById(`raise-btn-${playerId}`);
+            if (raiseControls) raiseControls.style.display = 'none';
+            if (raiseBtn) raiseBtn.style.display = 'inline-block';
+        }
+        if (rightButtons) rightButtons.style.display = 'flex';
+    }
+}
+
+        // Send action to backend, with optional amount for raise
+        function sendAction(action, amount = null) {
+            if (action === 'raise' && (amount === null || amount <= 0)) {
+                alert('Please enter a valid raise amount.');
+                return;
+            }
+
+            // DON'T hide buttons here - wait for server response
+            socket.emit('player_action', {
+                code: gameCode,
+                player_id: sessionPlayerId,
+                action: action,
+                amount: amount
+            });
+        }
+        
+        function showRaiseInput(playerId) {
+            // Hide raise button, show input and submit button
+            document.getElementById(`raise-btn-${playerId}`).style.display = 'none';
+            document.getElementById(`raise-controls-${playerId}`).style.display = 'flex';
+    
+            // Focus the input field
+            const input = document.getElementById(`raise-input-${playerId}`);
+            input.focus();
+            input.value = ''; // Clear previous value
+    
+            // Add escape key listener
+            input.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    cancelRaise(playerId);
+                }
+            });
+        }
+        
+        function handleRaiseKeyDown(event, playerId) {
+            if (event.key === 'Enter') {
+                submitRaise(playerId);
+            }
+        }
+
+        function submitRaise(playerId) {
+            const input = document.getElementById(`raise-input-${playerId}`);
+            const amount = parseInt(input.value);
+    
+            if (!amount || amount <= 0) {
+                alert("Please enter a valid raise amount.");
+                return;
+            }
+    
+            sendAction('raise', amount);
+    
+            // Reset UI
+            document.getElementById(`raise-controls-${playerId}`).style.display = 'none';
+            document.getElementById(`raise-btn-${playerId}`).style.display = 'inline-block';
+            input.value = '';
+        }
+        
+        function cancelRaise(playerId) {
+            // Hide input, show raise button
+            document.getElementById(`raise-controls-${playerId}`).style.display = 'none';
+            document.getElementById(`raise-btn-${playerId}`).style.display = 'inline-block';
+    
+            // Clear input
+            document.getElementById(`raise-input-${playerId}`).value = '';
+        }
+        
+        // Toggle sit out status
+        function toggleSitOut() {
+            const checkbox = document.getElementById('sit-out-checkbox');
+            const sitOut = checkbox.checked;
+            
+            socket.emit('toggle_sit_out', {
+                code: gameCode,
+                player_id: sessionPlayerId,
+                sit_out: sitOut
+            });
+        }
+
+        // Initialize on page load
+        window.onload = () => {
+    // Initialize the first turn
+    const currentPlayerId = "{{ current_player_id }}";
+    if (currentPlayerId) {
+        emitTurnUpdate(currentPlayerId);
+    }
+    
+    // Update community cards display
+    const communityCardsDiv = document.querySelector('.community-cards');
+    communityCardsDiv.innerHTML = '';
+    
+    gameState.community_cards.forEach(card => {
+        const img = document.createElement('img');
+        img.src = `/static/cards/${card.image_filename}`;
+        img.className = 'card community-card';
+        communityCardsDiv.appendChild(img);
+    });
+    
+    // Initialize sit out checkbox based on current player status
+    const currentPlayer = gameState.players.find(p => p.id === sessionPlayerId);
+    if (currentPlayer) {
+        const checkbox = document.getElementById('sit-out-checkbox');
+        const sitOutText = document.getElementById('sit-out-text');
+        
+        if (currentPlayer.sit_out_next_hand) {
+            sitOutText.textContent = 'Re-join Next Round';
+            checkbox.checked = true;
+        } else {
+            sitOutText.textContent = 'Sit Out Next Round';
+            checkbox.checked = false;
+        }
+        
+        // Initialize buy back controls
+        updatePlayerControls();
+    }
+
+    // Show analysis button if first hand already completed
+    if (firstHandCompleted) {
+        document.getElementById('analysis-button').style.display = 'block';
+    } else {
+        document.getElementById('analysis-button').style.display = 'none';
+    }
+};
+    </script>
+</body>
+</html>

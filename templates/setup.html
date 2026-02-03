@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game Setup</title>
+    <style>
+        table { border-collapse: collapse; width: 50%; margin: auto; }
+        td, th { padding: 10px; }
+        .error { color: red; text-align: center; }
+        .center { text-align: center; margin-top: 20px; }
+    </style>
+
+    <script>
+        function fallbackCopyTextToClipboard(text) {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+
+            // Prevent scrolling / iOS quirks and keep it off-screen
+            textarea.style.position = "fixed";
+            textarea.style.top = "0";
+            textarea.style.left = "-9999px";
+            textarea.style.opacity = "0";
+
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+
+            try {
+                const ok = document.execCommand("copy");
+                if (ok) {
+                    alert("Link copied to clipboard!");
+                } else {
+                    alert("Copy failed. Please copy manually.");
+                }
+            } catch (err) {
+                alert("Copy failed. Please copy manually.");
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        function copyLink() {
+            const el = document.getElementById("join-link");
+            if (!el) return;
+
+            const link = el.textContent.trim();
+
+            // Clipboard API only works in a secure context (https) OR localhost.
+            // Since you're on http://172.20.10.6, window.isSecureContext will be false,
+            // so we fall back to execCommand.
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(link)
+                    .then(() => alert("Link copied to clipboard!"))
+                    .catch(() => fallbackCopyTextToClipboard(link));
+            } else {
+                fallbackCopyTextToClipboard(link);
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <h1 style="text-align: center">Game Setup Page</h1>
+
+    {% if game_code %}
+        <div class="center">
+            <h2>Your Game Code: <strong>{{ game_code }}</strong></h2>
+            <p id="join-link">{{ join_link }}</p>
+            <button type="button" onclick="copyLink()">Copy Link</button>
+            <a href="{{ join_link }}"><button type="button">Go to Player Creation Page</button></a>
+        </div>
+    {% else %}
+        <p style="text-align: center">Please fill in the following details to create a unique game code.</p>
+        <form method="POST" action="/setup">
+            <table>
+                <tr><td>Max number of players:</td><td><input name="max_players" type="number" max="10" required></td></tr>
+                <tr><td>Min number of players:</td><td><input name="min_players" type="number" required></td></tr>
+                <tr><td>Time limit (mins):</td><td><input name="time_limit" type="number" required></td></tr>
+                <tr><td>Chips per dollar:</td><td><input name="chips_per_dollar" type="number" required></td></tr>
+                <tr><td>Buy-in amount (chips):</td><td><input name="buy_in" type="number" required></td></tr>
+                <tr><td>Big blind (chips):</td><td><input name="big_blind" type="number" required></td></tr>
+                <tr><td>Small blind (chips):</td><td><input name="small_blind" type="number" required></td></tr>
+            </table>
+            {% if error %}<p class="error">{{ error }}</p>{% endif %}
+            <div class="center">
+                <button type="submit">Get Code</button>
+            </div>
+        </form>
+    {% endif %}
+</body>
+</html>
