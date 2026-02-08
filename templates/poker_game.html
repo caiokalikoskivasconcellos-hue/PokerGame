@@ -179,15 +179,27 @@
             object-fit: cover;
             transition: transform 0.3s ease;
         }
-        .position-indicators {
-    position: absolute;
-    top: -25px;  /* Adjust based on your layout */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;  /* Above other elements */
-    display: flex;
-    gap: 5px;
+        /* Controls: tweak these two numbers */
+.player-slot{
+  --text-offset: 70px;     /* + = below avatar */
+  --badge-offset: -55px;   /* - = above avatar */
 }
+
+/* D/SB/BB should always be above hole cards */
+.player-slot .position-indicators{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 999;              /* higher than .hole-cards (z=3) */
+  display: flex;
+  gap: 5px;
+  pointer-events: none;
+
+  /* move "up" along the seat's rotated axis */
+  transform: translate(-50%, -50%) rotate(var(--hc-rot)) translateY(var(--badge-offset));
+}
+
+
 
 .dealer-button, .small-blind, .big-blind {
     background: white;
@@ -272,93 +284,93 @@
             cursor: pointer;
         }
 
-        /* Custom positions and rotation for hole cards per slot */
-        .slot0 .hole-cards {
-            top: -70px;
-            left: 50%;
-            transform: translateX(-50%) rotate(0deg);
-        }
-        .slot0.player-name, .slot0.player-action-text, .slot0.player-chips {
-            transform: rotate(0deg);
-        }
-        .slot1 .hole-cards {
-            top: -70px;
-            left: 50%;
-            transform: translateX(-50%) rotate(0deg);
-        }
-        .slot1.player-name, .slot1.player-action-text, .slot1.player-chips {
-            transform: rotate(0deg);
-        }
-        .slot2 .hole-cards {
-            top: -50px;
-            left: 90%;
-            transform: translateX(-50%) rotate(45deg);
-        }
-        .slot2.player-name, .slot2.player-action-text, .slot2.player-chips {
-            transform: rotate(45deg);
-        }
-        .slot3 .hole-cards {
-            top: 10%;
-            left: 100%;
-            transform: translateX(-50%) rotate(90deg);
-        }
-        .slot3.player-name, .slot3.player-action-text, .slot3.player-chips {
-            transform: rotate(45deg);
-        }
-        .slot4 .hole-cards {
-            top: 90px;
-            left: 110%;
-            transform: translateX(-50%) rotate(135deg);
-        }
-        .slot4.player-name, .slot4.player-action-text, .slot4.player-chips {
-            transform: rotate(135deg);
-        }
-        .slot5 .hole-cards {
-            top: 100%;
-            left: 55%;
-            transform: translateX(-50%) rotate(180deg);
-        }
-        .slot6 .hole-cards {
-            top: 100%;
-            left: 55%;
-            transform: translateX(-50%) rotate(180deg);
-        }
-        .slot7 .hole-cards {
-            top: 120px;
-            left: 5%;
-            transform: translateX(-50%) rotate(225deg);
-        }
-        .slot7.player-name, .slot7.player-action-text, .slot7.player-chips {
-            transform: rotate(225deg);
-        }
-        .slot8 .hole-cards {
-            top: 30px;
-            left: 0%;
-            transform: translateX(-50%) rotate(-90deg);
-        }
-        .slot8.player-name, .slot8.player-action-text, .slot8.player-chips {
-            transform: rotate(-90deg);
-        }
-        .slot9 .hole-cards {
-            top: -50px;
-            left: 10%;
-            transform: translateX(-50%) rotate(-45deg);
-        }
-        .slot9.player-name, .slot9.player-action-text, .slot9.player-chips {
-            transform: rotate(-45deg);
-        }
+        /* =========================================================
+   ONE SOURCE OF TRUTH for seat offsets + rotation
+   Hole cards + hand description + player text all follow this
+   ========================================================= */
 
-        /* NEW: Custom positions for hand descriptions */
-        .slot0 .hand-description { top: -90px; }
-        .slot1 .hand-description { top: -90px; }
-        .slot2 .hand-description { top: -80px; transform: translateX(-50%) rotate(45deg); }
-        .slot3 .hand-description { top: -40px; transform: translateX(-50%) rotate(90deg); }
-        .slot4 .hand-description { top: 60px; transform: translateX(-50%) rotate(135deg); }
-        .slot5 .hand-description { top: 120px; transform: translateX(-50%) rotate(180deg); }
-        .slot6 .hand-description { top: 120px; transform: translateX(-50%) rotate(180deg); }
-        .slot7 .hand-description { top: 100px; transform: translateX(-50%) rotate(225deg); }
-        .slot8 .hand-description { top: 10px; transform: translateX(-50%) rotate(-90deg); }
-        .slot9 .hand-description { top: -80px; transform: translateX(-50%) rotate(-45deg); }
+/* tweak these two if you want spacing */
+.player-slot {
+  --hand-h: 26px;     /* fixed label height */
+  --hand-gap: 2px;    /* gap between label bottom and cards top */
+}
+
+/* Make hole-cards follow per-seat vars */
+.player-slot .hole-cards{
+  top: var(--hc-top);
+  left: var(--hc-left);
+  transform: translateX(-50%) rotate(var(--hc-rot));
+}
+
+/* Make hand-description follow the SAME vars, but sit just above hole cards */
+.player-slot .hand-description{
+  left: var(--hc-left);
+  top: calc(var(--hc-top) - var(--hand-h) - var(--hand-gap));
+  height: var(--hand-h);
+  line-height: var(--hand-h);
+  padding: 0 10px; /* keep height exact */
+  transform: translateX(-50%) rotate(var(--hc-rot));
+}
+
+/* Anchor container so text can be positioned relative to avatar */
+.avatar-anchor{
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Text stack anchored to avatar center and pushed "down" in seat-rotated direction */
+.player-slot .player-text{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+    pointer-events: none; /* avoid blocking clicks */
+
+    /* center on avatar, rotate to seat, then move down along rotated axis */
+    transform: translate(-50%, -50%) rotate(var(--hc-rot)) translateY(70px);
+    transform-origin: center;
+}
+
+/* Make sure inner lines don't rotate again */
+.player-slot .player-text .player-name,
+.player-slot .player-text .player-chips,
+.player-slot .player-text .player-action-text{
+    transform: none;
+    display: block;
+}
+
+
+/* Make sure inner lines don't rotate again */
+.player-slot .player-text .player-name,
+.player-slot .player-text .player-chips,
+.player-slot .player-text .player-action-text{
+  transform: none;
+  display: block;
+}
+
+
+/* ---- Seat-specific values (match exactly what you already use for hole cards) ---- */
+.slot0 { --hc-top: -70px; --hc-left: 50%;  --hc-rot: 0deg; }
+.slot1 { --hc-top: -70px; --hc-left: 50%;  --hc-rot: 0deg; }
+.slot2 { --hc-top: -50px; --hc-left: 90%;  --hc-rot: 45deg; }
+.slot3 { --hc-top: 10%;   --hc-left: 100%; --hc-rot: 90deg; }
+.slot4 { --hc-top: 90px;  --hc-left: 110%; --hc-rot: 135deg; }
+.slot5 { --hc-top: 100%;  --hc-left: 55%;  --hc-rot: 180deg; }
+.slot6 { --hc-top: 100%;  --hc-left: 55%;  --hc-rot: 180deg; }
+.slot7 { --hc-top: 120px; --hc-left: 5%;   --hc-rot: 225deg; }
+.slot8 { --hc-top: 30px;  --hc-left: 0%;   --hc-rot: -90deg; }
+.slot9 { --hc-top: -50px; --hc-left: 10%;  --hc-rot: -45deg; }
+
+
+        
 
         /* Tilted action buttons for angled positions */
         .slot2 .player-controls {
@@ -703,20 +715,12 @@
                         <img src="{{ url_for('static', filename='cards/' + card.image_filename) }}" alt="card" class="hole-card" style="transform: rotate({{ angle }}deg);">
                     {% endfor %}
                 </div>
-                <div class="position-indicators">
-                    <div class="dealer-button" 
-                        style="display: {% if i == dealer_position %}block{% else %}none{% endif %};">
-                        D
-                    </div>
-                    <div class="small-blind" 
-                        style="display: {% if i == small_blind_pos %}block{% else %}none{% endif %};">
-                        SB
-                    </div>
-                    <div class="big-blind" 
-                        style="display: {% if i == big_blind_pos %}block{% else %}none{% endif %};">
-                        BB
-                    </div>
-                </div>
+                <!-- D / SB / BB -->
+    <div class="position-indicators">
+        <div class="dealer-button" style="display: {% if i == dealer_position %}block{% else %}none{% endif %};">D</div>
+        <div class="small-blind"  style="display: {% if i == small_blind_pos %}block{% else %}none{% endif %};">SB</div>
+        <div class="big-blind"    style="display: {% if i == big_blind_pos %}block{% else %}none{% endif %};">BB</div>
+    </div>
                 <div class="player-controls">
                     <!-- LEFT BUTTONS -->
                     <div class="left-buttons" id="left-buttons-{{ player.id }}" style="display:none;">
@@ -724,7 +728,15 @@
                         <button onclick="sendAction('call')">Call</button>
                     </div>
 
-                    <img src="{{ url_for('static', filename=player.avatar) }}" class="avatar" id="avatar-{{ player.id }}" alt="avatar">
+                    <div class="avatar-anchor">
+
+    <img src="{{ url_for('static', filename=player.avatar) }}"
+         class="avatar"
+         id="avatar-{{ player.id }}"
+         alt="avatar">
+    
+</div>
+
 
                     <!-- RIGHT BUTTONS -->
                     <div class="right-buttons" id="right-buttons-{{ player.id }}" style="display:none;">
@@ -739,10 +751,12 @@
                     </div>
                 </div>
 
-                <div class="player-name">{{ player.name }}</div>
-                <div class="player-chips" id="chips-{{ player.id }}">{{ player.money }} chips</div>
-                <div class="player-action-text" id="action-{{ player.id }}">
-                    {% if player.money <= 0 %}OUT{% else %}{{ player.last_action or '' }}{% endif %}
+                <div class="player-text">
+                    <div class="player-name">{{ player.name }}</div>
+                    <div class="player-chips" id="chips-{{ player.id }}">{{ player.money }} chips</div>
+                    <div class="player-action-text" id="action-{{ player.id }}">
+                        {% if player.money <= 0 %}OUT{% else %}{{ player.last_action or '' }}{% endif %}
+                    </div>
                 </div>
             </div>
         {% endfor %}
@@ -1016,25 +1030,48 @@
                     <h4>Detailed Analysis</h4>
                     <div class="personal-summary">${data.summary}</div>
                     
-                    <button class="download-btn" onclick="downloadPersonalReport('${data.player_name}', ${JSON.stringify(data).replace(/'/g, "\\'")})">
-                        📥 Download My Report
-                    </button>
+                    <button class="download-btn" id="download-personal-btn">
+    📥 Download My Report
+</button>
+
                 </div>
-            `;
+            `; 
+            // Wire up download button safely (no inline JSON in HTML attributes)
+const dlBtn = container.querySelector('#download-personal-btn');
+if (dlBtn) {
+    dlBtn.onclick = () => downloadPersonalReport(data.player_name, data);
+}
         }
 
         // NEW: Download personal report
         function downloadPersonalReport(playerName, reportData) {
-            const blob = new Blob([reportData.summary], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${playerName}_Poker_Analysis.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
+    const safeName = (playerName || 'player').replace(/[^a-z0-9_\-]+/gi, '_');
+
+    const lines = [];
+    lines.push(`Player: ${reportData.player_name ?? playerName ?? ''}`);
+    if (reportData.style || reportData.player_type) {
+        lines.push(`Style: ${(reportData.style ?? '').trim()}${reportData.player_type ? ' - ' + reportData.player_type : ''}`);
+    }
+    if (typeof reportData.risk_score === 'number') {
+        lines.push(`Risk Score: ${reportData.risk_score.toFixed(1)}/100`);
+    }
+    lines.push('');
+    lines.push(reportData.summary ?? '');
+
+    const text = lines.join('\n');
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${safeName}_Poker_Analysis.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 
         // NEW: Show analysis modal (for end of game)
         function showAnalysisModal(reports) {
