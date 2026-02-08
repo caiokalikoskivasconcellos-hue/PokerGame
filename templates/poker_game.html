@@ -302,15 +302,28 @@
   transform: translateX(-50%) rotate(var(--hc-rot));
 }
 
-/* Make hand-description follow the SAME vars, but sit just above hole cards */
+/* Hand description: same anchor as hole cards, but offset in the rotated axis */
+.player-slot {
+  --hand-h: 26px;      /* label height */
+  --hand-gap: 2px;     /* gap between label and cards */
+  --hand-nudge: 0px;   /* extra fine tuning (global or per-seat) */
+}
+
 .player-slot .hand-description{
   left: var(--hc-left);
-  top: calc(var(--hc-top) - var(--hand-h) - var(--hand-gap));
+  top: var(--hc-top);
+
   height: var(--hand-h);
   line-height: var(--hand-h);
-  padding: 0 10px; /* keep height exact */
-  transform: translateX(-50%) rotate(var(--hc-rot));
+  padding: 0 10px;
+
+  /* center on the same anchor, rotate with the seat, then move UP along that rotated axis */
+  transform: translateX(-50%) rotate(var(--hc-rot))
+             translateY(calc((var(--hand-h) + var(--hand-gap) + var(--hand-nudge)) * -1));
+
+  transform-origin: center;
 }
+
 
 /* Anchor container so text can be positioned relative to avatar */
 .avatar-anchor{
