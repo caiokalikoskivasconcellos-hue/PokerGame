@@ -278,25 +278,40 @@
             left: 50%;
             transform: translateX(-50%) rotate(0deg);
         }
+        .slot0.player-name, .slot0.player-action-text, .slot0.player-chips {
+            transform: rotate(0deg);
+        }
         .slot1 .hole-cards {
             top: -70px;
             left: 50%;
             transform: translateX(-50%) rotate(0deg);
+        }
+        .slot1.player-name, .slot1.player-action-text, .slot1.player-chips {
+            transform: rotate(0deg);
         }
         .slot2 .hole-cards {
             top: -50px;
             left: 90%;
             transform: translateX(-50%) rotate(45deg);
         }
+        .slot2.player-name, .slot2.player-action-text, .slot2.player-chips {
+            transform: rotate(45deg);
+        }
         .slot3 .hole-cards {
             top: 10%;
             left: 100%;
             transform: translateX(-50%) rotate(90deg);
         }
+        .slot3.player-name, .slot3.player-action-text, .slot3.player-chips {
+            transform: rotate(45deg);
+        }
         .slot4 .hole-cards {
             top: 90px;
             left: 110%;
             transform: translateX(-50%) rotate(135deg);
+        }
+        .slot4.player-name, .slot4.player-action-text, .slot4.player-chips {
+            transform: rotate(135deg);
         }
         .slot5 .hole-cards {
             top: 100%;
@@ -313,15 +328,24 @@
             left: 5%;
             transform: translateX(-50%) rotate(225deg);
         }
+        .slot7.player-name, .slot7.player-action-text, .slot7.player-chips {
+            transform: rotate(225deg);
+        }
         .slot8 .hole-cards {
             top: 30px;
             left: 0%;
             transform: translateX(-50%) rotate(-90deg);
         }
+        .slot8.player-name, .slot8.player-action-text, .slot8.player-chips {
+            transform: rotate(-90deg);
+        }
         .slot9 .hole-cards {
             top: -50px;
             left: 10%;
             transform: translateX(-50%) rotate(-45deg);
+        }
+        .slot9.player-name, .slot9.player-action-text, .slot9.player-chips {
+            transform: rotate(-45deg);
         }
 
         /* NEW: Custom positions for hand descriptions */
@@ -738,7 +762,7 @@
     </div>
 
     <!-- ANALYSIS SIDEBAR -->
-    <div id="analysis-sidebar" class="collapsed">
+    <div id="analysis-sidebar">
         <div class="analysis-header">
             <div class="analysis-title">Player Analysis</div>
             <div class="analysis-controls">
