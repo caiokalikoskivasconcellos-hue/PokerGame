@@ -451,15 +451,17 @@
         }
         
         .chip-animation {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background-image: url('/static/Chips/chips1.png');
-            background-size: cover;
-            border-radius: 50%;
-            z-index: 1500;
-            transition: all 1s ease-in-out;
-        }
+    position: fixed;              
+    width: 40px;
+    height: 40px;
+    background-image: url('/static/Chips/chips1.png');
+    background-size: cover;
+    border-radius: 50%;
+    z-index: 5000;                /* must be > winner overlay (2000) */
+    transition: all 1s ease-in-out;
+    pointer-events: none;
+}
+
 
         /* NEW: Analysis Sidebar Styles */
         #analysis-sidebar {
