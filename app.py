@@ -166,9 +166,9 @@ def setup_game():
                 'small_blind_pos': 1,  # Small blind is next after dealer
                 'big_blind_pos': 2,    # Big blind is two after dealer
                 'first_hand_completed': False,  # Track if first hand completed
-                'time_expired': False,  # NEW: Time limit tracking
-                'extend_votes': set(),     # NEW: Votes to extend time
-                'buy_back_votes': set(),    # NEW: Votes to buy back in
+                'time_expired': False,  # Time limit tracking
+                'extend_votes': set(),     # Votes to extend time
+                'buy_back_votes': set(),    # Votes to buy back in
                 'total_voters': set(),
                 'timer_active': True,
                 "last_player": 0
@@ -421,7 +421,7 @@ def poker_game(code):
                        big_blind_pos=game['big_blind_pos'],
                        first_hand_completed=game['first_hand_completed'])
 
-# NEW: Game over routes
+# Game over routes
 @app.route('/game_over_time/<code>')
 def game_over_time(code):
     game = games.get(code)
@@ -570,7 +570,7 @@ def next_round_stage(code):
             current_player = game['players'][game['current_player_index']]
             if (not current_player.get('has_folded') and 
                 not current_player.get('has_gone_all_in') and
-                current_player['money'] > 0):  # NEW: Check if player has money
+                current_player['money'] > 0):  # Check if player has money
                 break
             game['current_player_index'] = (game['current_player_index'] + 1) % len(game['players'])
         
@@ -614,7 +614,7 @@ def process_showdown(code):
     if not game:
         return
         
-    # NEW: Make all hole cards visible during showdown
+    # Make all hole cards visible during showdown
     for player in game['players']:
         for card in player['holecards']:
             card['visible'] = True
@@ -624,7 +624,7 @@ def process_showdown(code):
         else:
             get_hand(code, player)
     
-    # NEW: Emit showdown cards FIRST to reveal everything
+    # Emit showdown cards FIRST to reveal everything
     socketio.emit('showdown_cards', {
         'players': game['players']
     }, room=code)
@@ -634,7 +634,7 @@ def process_showdown(code):
         'temp_status': 'Showdown! All cards revealed'
     }, room=code)
     
-    # NEW: Wait 5 seconds for players to see all cards
+    # Wait 5 seconds for players to see all cards
     socketio.sleep(5)
     
     # Now process the pots and winners
@@ -714,10 +714,10 @@ def process_showdown(code):
                 player_data['total_profit'] -= loss_amount
                 player_data['stats']['biggest_pot_lost'] = max(player_data['stats']['biggest_pot_lost'], loss_amount)
 
-    # NEW: Mark first hand as completed
+    # Mark first hand as completed
     game['first_hand_completed'] = True
 
-    # NEW: Emit winner information after showing cards for 5 seconds
+    # Emit winner information after showing cards for 5 seconds
     socketio.emit('showdown_results', {
         'winners': winners_info
     }, room=code)
@@ -728,7 +728,7 @@ def process_showdown(code):
     # Wait for winner animation to complete (5 seconds)
     socketio.sleep(5)
 
-    # NEW: Check for time expiration
+    # Check for time expiration
     if game.get('time_expired'):
         socketio.emit('game_over_time', {}, room=code)
         return
@@ -745,7 +745,7 @@ def get_hand(code, p):
     if not game:
         return
     p['handscores'] = calc_hand(game['community_cards'], p['holecards'])
-    # NEW: Add hand description for display
+    # Add hand description for display
     p['hand_description'] = get_hand_description(p['handscores'])
     
     # Update game_data with hand strength
@@ -1094,7 +1094,6 @@ def handle_player_action(data):
     action = data['action']
     amount = data.get('amount', 0)
     print(f"[ACTION] Player {player_id} does {action.upper()} with amount {amount} in game {code}")
-    
     game = games.get(code)
     if not game:
         emit('error', {'msg': 'Game not found.'})
@@ -1124,13 +1123,11 @@ def handle_player_action(data):
     if player['id'] != current_player['id']:
         emit('error', {'msg': 'Not your turn!'})
         return
-
     # Update game_data with player action
     if code in game_data and player['name'] in game_data[code]:
         player_data = game_data[code][player['name']]
         current_hand = player_data['hands'][game['hand']]
-        current_round = current_hand['betting_rounds'][game['round_stage']]
-        
+        current_round = current_hand['betting_rounds'][game['round_stage']]       
         # Record action
         current_round['actions'].append({
             'action': action,
@@ -1138,8 +1135,7 @@ def handle_player_action(data):
             'timestamp': time.time(),
             'pot_size': game['active_pot'],
             'current_bet': game['current_highest_bet']
-        })
-        
+        })        
         # Update statistics
         stats = player_data['stats']
         if action == 'fold':
@@ -1169,7 +1165,6 @@ def handle_player_action(data):
             emit('error', {'msg': f'Cannot check - must call {game["current_highest_bet"] - player["current_bet"]} more'})
             return
         player['moved'] = True
-
     elif action == 'call':
         to_call = game['current_highest_bet'] - player['current_bet']
         if to_call <= 0:
@@ -1187,7 +1182,6 @@ def handle_player_action(data):
             player['money'] = 0
             player['has_gone_all_in'] = True
             player['moved'] = True
-
     elif action == 'raise':
         to_call = game['current_highest_bet'] - player['current_bet']
         total_bet = to_call + amount
@@ -1204,7 +1198,6 @@ def handle_player_action(data):
         else:
             emit('error', {'msg': 'Not enough chips to raise.'})
             return
-
     else:
         emit('error', {'msg': 'Invalid action.'})
         return
@@ -1219,32 +1212,24 @@ def handle_player_action(data):
         'action_text': text,
         'money': player['money'],
         'pot': game['active_pot']
-    }, room=code)
-    
+    }, room=code)    
     print(f"Emitted update_action for player {player_id} in room {code}")
-
-    # If only one player can still act (everyone else folded or all-in), skip directly to showdown
-    
-
     # Advance to next active player (excluding sitting out and folded players)
     total_players = len(game['players'])
     next_index = (current_index + 1) % total_players
-
     skipped_players = 0
     while skipped_players < total_players:
         next_player = game['players'][next_index]
         if (not next_player.get('has_folded') and 
             not next_player.get('has_gone_all_in') and 
-            not next_player.get('sitting_out', False) and  # ADDED: Check if not sitting out
-            next_player['money'] > 0):  # NEW: Check if player has money
+            not next_player.get('sitting_out', False) and  # Check if not sitting out
+            next_player['money'] > 0):  # Check if player has money
             break
         next_index = (next_index + 1) % total_players
         skipped_players += 1
-
     game['current_player_index'] = next_index
 
     # Check if all active players have matched the bet
-    # Recompute these AFTER the action, because money/all-in status may have changed
     active_players = [
         p for p in game['players']
         if not p.get('has_folded') and not p.get('sitting_out', False)
@@ -1267,7 +1252,6 @@ def handle_player_action(data):
     if all_matched and no_more_betting_possible:
         game['betting_round_active'] = False
         game['round_stage'] = 'showdown'
-
         # Reveal all community cards before showdown
         community_cards = [Card.from_dict(card) for card in game['community_cards']]
         for card in community_cards:
@@ -1285,7 +1269,6 @@ def handle_player_action(data):
         socketio.start_background_task(process_showdown, code)
         return
 
-    # Existing behavior
     if all_matched:
         game['betting_round_active'] = False
         socketio.start_background_task(next_round_stage, code)
@@ -1320,7 +1303,7 @@ def handle_toggle_sit_out(data):
         'sit_out_next_hand': sit_out
     }, room=code)
 
-# NEW: Socket event for buying back in
+# Socket event for buying back in
 @socketio.on('buy_back_in')
 def handle_buy_back(data):
     code = data['code']
@@ -1665,7 +1648,7 @@ def start_betting_round(data):
         'current_player_id': game['players'][0]['id']
     }, room=code)
 
-# NEW: Socket event for requesting personal analysis during game
+# Socket event for requesting personal analysis during game
 @socketio.on('request_personal_analysis')
 def handle_personal_analysis(data):
     code = data['code']
@@ -1883,7 +1866,7 @@ def generate_player_reports(game_code):
         player_data['style'] = style
         player_data['risk_score'] = risk_score
         
-        # Generate AI summary
+        # Generate summary
         stats = player_data['stats']
         summary = f"""
 Player: {player_name}

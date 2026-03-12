@@ -43,10 +43,6 @@
             if (!el) return;
 
             const link = el.textContent.trim();
-
-            // Clipboard API only works in a secure context (https) OR localhost.
-            // Since you're on http://172.20.10.6, window.isSecureContext will be false,
-            // so we fall back to execCommand.
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(link)
                     .then(() => alert("Link copied to clipboard!"))

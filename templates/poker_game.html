@@ -166,7 +166,7 @@
             gap: 5px;
             z-index: 3;
             /* Default position - adjust per slot below */
-            top: -50px; /* example offset above avatar */
+            top: -50px; /* offset above avatar */
             left: 50%;
             transform: translateX(-50%);
         }
@@ -179,7 +179,7 @@
             object-fit: cover;
             transition: transform 0.3s ease;
         }
-        /* Controls: tweak these two numbers */
+        /* Controls: change these two numbers */
 .player-slot{
   --text-offset: 70px;     /* + = below avatar */
   --badge-offset: -55px;   /* - = above avatar */
@@ -240,7 +240,7 @@
             z-index: 20;
         }
 
-        /* NEW: Hand description styling for showdown */
+        /* Hand description styling for showdown */
         .hand-description {
             position: absolute;
             top: -90px;
@@ -289,9 +289,9 @@
    Hole cards + hand description + player text all follow this
    ========================================================= */
 
-/* tweak these two if you want spacing */
+
 .player-slot {
-  --hand-h: 26px;     /* fixed label height */
+  --hand-h: 26px;     
   --hand-gap: 2px;    /* gap between label bottom and cards top */
 }
 
@@ -370,7 +370,7 @@
 }
 
 
-/* ---- Seat-specific values (match exactly what you already use for hole cards) ---- */
+/*Seat-specific values*/
 .slot0 { --hc-top: -70px; --hc-left: 50%;  --hc-rot: 0deg; }
 .slot1 { --hc-top: -70px; --hc-left: 50%;  --hc-rot: 0deg; }
 .slot2 { --hc-top: -50px; --hc-left: 90%;  --hc-rot: 45deg; }
@@ -463,7 +463,7 @@
 }
 
 
-        /* NEW: Analysis Sidebar Styles */
+        /* Analysis Sidebar Styles */
         #analysis-sidebar {
             position: fixed;
             top: 0;
@@ -720,7 +720,7 @@
         {% for player in players %}
             {% set i = loop.index0 %}
             <div class="player-slot slot{{ i }}" data-player-id="{{ player.id }}">
-                <!-- NEW: Hand description display -->
+                <!-- Hand description display -->
                 <div class="hand-description" id="hand-description-{{ player.id }}"></div>
                 
                 <!-- Hole cards display -->
@@ -855,7 +855,7 @@
 
         socket.emit('join_room', { code: gameCode });
 
-        // NEW: Handle time updates
+        // Handle time updates
         socket.on('time_update', function(data) {
             const timeLeft = document.getElementById('time-left');
             const minutes = data.minutes.toString().padStart(2, '0');
@@ -872,33 +872,33 @@
             }
         });
 
-        // NEW: Handle time expiration - redirect to game_over_time.html
+        // Handle time expiration - redirect to game_over_time.html
         socket.on('time_expired', function() {
             document.getElementById('status-bar').textContent = 'Time expired! Finishing current hand...';
         });
 
-        // NEW: Handle game over due to time - redirect to dedicated page
+        // Handle game over due to time - redirect to dedicated page
         socket.on('game_over_time', function() {
             window.location.href = `/game_over_time/${gameCode}`;
         });
 
-        // NEW: Handle game over due to buy-in - redirect to dedicated page  
+        // Handle game over due to buy-in - redirect to dedicated page  
         socket.on('game_over_buyin', function() {
             window.location.href = `/game_over_buyin/${gameCode}`;
         });
 
-        // NEW: Handle personal analysis report
+        // Handle personal analysis report
         socket.on('personal_analysis_report', function(data) {
             displayPersonalAnalysis(data);
         });
 
-        // NEW: Handle game analysis report (end of game)
+        // Handle game analysis report (end of game)
         socket.on('game_analysis_report', function(data) {
             console.log('Game analysis report received', data);
             showAnalysisModal(data.reports);
         });
 
-        // NEW: Handle player bought back
+        // Handle player bought back
         socket.on('player_bought_back', function(data) {
             if (data.player_id === sessionPlayerId) {
                 // Update local display
@@ -914,7 +914,7 @@
             }
         });
 
-        // NEW: Toggle analysis sidebar
+        // Toggle analysis sidebar
         function toggleAnalysisSidebar() {
             const sidebar = document.getElementById('analysis-sidebar');
             if (sidebar.classList.contains('collapsed') || sidebar.classList.contains('expanded')) {
@@ -931,7 +931,7 @@
             }
         }
 
-        // NEW: Toggle analysis size
+        // Toggle analysis size
         function toggleAnalysisSize() {
             const sidebar = document.getElementById('analysis-sidebar');
             const expandBtn = document.getElementById('expand-btn');
@@ -947,7 +947,7 @@
             }
         }
 
-        // NEW: Request personal analysis
+        // Request personal analysis
         function requestPersonalAnalysis() {
             socket.emit('request_personal_analysis', {
                 code: gameCode,
@@ -955,7 +955,7 @@
             });
         }
 
-        // NEW: Display personal analysis
+        // Display personal analysis
         function displayPersonalAnalysis(data) {
             const container = document.getElementById('personal-analysis-container');
             const riskClass = data.risk_score < 33 ? 'risk-low' : 
@@ -1058,7 +1058,7 @@ if (dlBtn) {
 }
         }
 
-        // NEW: Download personal report
+        // Download personal report
         function downloadPersonalReport(playerName, reportData) {
     const safeName = (playerName || 'player').replace(/[^a-z0-9_\-]+/gi, '_');
 
@@ -1088,7 +1088,7 @@ if (dlBtn) {
 }
 
 
-        // NEW: Show analysis modal (for end of game)
+        // Show analysis modal (for end of game)
         function showAnalysisModal(reports) {
             const container = document.getElementById('analysis-reports-container');
             let html = '';
@@ -1120,12 +1120,12 @@ if (dlBtn) {
             document.getElementById('analysis-modal').style.display = 'flex';
         }
 
-        // NEW: Close analysis modal
+        // Close analysis modal
         function closeAnalysisModal() {
             document.getElementById('analysis-modal').style.display = 'none';
         }
 
-        // NEW: Handle first hand completed
+        // Handle first hand completed
         socket.on('new_hand_started', function(data) {
             // Show analysis button if first hand completed
             if (data.first_hand_completed) {
@@ -1181,7 +1181,7 @@ if (data.pot !== undefined) {
         communityCardsDiv.appendChild(img);
     });
     
-    // NEW: Hide all hand descriptions and reset hole card visibility
+    // Hide all hand descriptions and reset hole card visibility
     document.querySelectorAll('.hand-description').forEach(el => {
         el.style.display = 'none';
         el.textContent = '';
@@ -1242,7 +1242,7 @@ if (data.pot !== undefined) {
     emitTurnUpdate(currentPlayerId);
 });
 
-        // NEW: Handle showdown cards - reveal all hole cards and show hand descriptions
+        // Handle showdown cards - reveal all hole cards and show hand descriptions
         socket.on('showdown_cards', function(data) {
             data.players.forEach(player => {
                 const holeCardsDiv = document.querySelector(`[data-player-id="${player.id}"] .hole-cards`);
@@ -1269,7 +1269,7 @@ if (data.pot !== undefined) {
             });
         });
 
-        // NEW: Update player controls based on current status
+        // Update player controls based on current status
         function updatePlayerControls() {
             const currentPlayer = gameState.players.find(p => p.id === sessionPlayerId);
             if (currentPlayer) {
@@ -1286,7 +1286,7 @@ if (data.pot !== undefined) {
             }
         }
 
-        // NEW: Toggle buy back
+        // Toggle buy back
         function toggleBuyBack() {
             const checkbox = document.getElementById('buy-back-checkbox');
             const buyBack = checkbox.checked;
@@ -1449,7 +1449,6 @@ if (data.pot !== undefined) {
                 countdownEl.textContent = count;
                 if (count <= 0) {
                     clearInterval(countdown);
-                    // Don't hide here - wait for new_hand_started
                 }
             }, 1000);
             
